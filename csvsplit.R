@@ -1,13 +1,14 @@
 #!/usr/bin/env Rscript
 
-
-library(readr)
-library(dplyr)
-library(purrr)
-library(tidyr)
-library(readr)
-library(stringr)
-library(optparse)
+suppressPackageStartupMessages({
+  library(readr,quietly = T)
+  library(dplyr,quietly = T)
+  library(purrr)
+  library(tidyr)
+  library(readr)
+  library(stringr)
+  library(optparse)
+})
 
 parser <- OptionParser()
 parser <- add_option(parser, c("-i", "--input"), type="character", default="",
@@ -21,15 +22,21 @@ parser <- add_option(parser, c("-p", "--partitions"), type="character", default=
 
 
 opt <- parse_args(parser)
-opt
+#opt
 
 dir = opt$output
 partitions = str_split(opt$partitions,",")[[1]]
 infile=opt$input
 
+
+if (dir.exists(dir)) {
+  stop(paste0("Target dir exists already: ",dir))
+}
+
 f <- function(x,pos) {
 #  print(x %>% colnames)
   x <- x %>% relocate(all_of(partitions))
+  x %>% drop
 
   x %>% distinct_at(all_of(partitions)) %>%
     tidyr::unite(dirs,sep="/") %>%
@@ -48,10 +55,9 @@ f <- function(x,pos) {
 }
 #infile="/home/carsten/tmp/data_100000.csv"
 
-ncols <- read_csv(infile,n_max = 1) %>% ncol
 
-read_csv_chunked(infile, col_types = paste0(rep("c",ncols),collapse = ""),
+ncols <- suppressMessages(read_csv(infile,n_max = 1)) %>% ncol
+
+dummy=read_csv_chunked(infile, col_types = paste0(rep("c",ncols),collapse = ""),
    SideEffectChunkCallback$new(f),progress = T)
 
-#x = read_csv("/home/carsten/tmp/big.csv", n_max = 100000,col_types = "ccccccccccccccccccc")
-#infile
