@@ -34,9 +34,9 @@ if (dir.exists(dir)) {
 }
 
 f <- function(x,pos) {
-#  print(x %>% colnames)
-  x <- x %>% relocate(all_of(partitions))
-  x %>% drop
+                                        #  print(x %>% colnames)
+  x <- x %>%
+    relocate(all_of(partitions))
 
   x %>% distinct_at(all_of(partitions)) %>%
     tidyr::unite(dirs,sep="/") %>%
@@ -50,14 +50,14 @@ f <- function(x,pos) {
                                        .y %>% tidyr::unite(dirs,sep="/") %>% pull(dirs) %>% magrittr::extract(1),
                                        "/",
                                        "data.csv"),
-                           append = T))
+                           append = (pos==1)))
 
 }
-#infile="/home/carsten/tmp/data_100000.csv"
 
+col_names <-  suppressMessages(names(spec_csv(infile)$cols))
 
-ncols <- suppressMessages(read_csv(infile,n_max = 1)) %>% ncol
-
-dummy=read_csv_chunked(infile, col_types = paste0(rep("c",ncols),collapse = ""),
+#ncols <- suppressMessages(read_csv(infile,n_max = 1)) %>% ncol
+ncols <- length(col_names)
+dummy  <-  read_csv_chunked(infile, col_types = paste0(rep("c",ncols),collapse = ""),
    SideEffectChunkCallback$new(f),progress = T)
 
